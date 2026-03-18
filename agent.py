@@ -6,7 +6,6 @@ A ReAct-style agent loop:
 """
 
 import os
-import sys
 from typing import Annotated, TypedDict
 
 from dotenv import load_dotenv
@@ -93,17 +92,18 @@ def build_graph():
 graph = build_graph()
 
 # ---------------------------------------------------------------------------
-# Entry point
+# BedrockAgentCore entrypoint
 # ---------------------------------------------------------------------------
 
-def run(task: str) -> str:
-    result = graph.invoke({"messages": [HumanMessage(content=task)]})
-    for msg in reversed(result["messages"]):
-        if hasattr(msg, "content") and msg.content:
-            return msg.content
-    return ""
+from bedrock_agentcore import BedrockAgentCoreApp
 
+app = BedrockAgentCoreApp()
+
+@app.entrypoint
+def invoke(payload):
+    prompt = payload.get("prompt", "")
+    result = graph.invoke({"messages": [HumanMessage(content=prompt)]})
+    return {"result": result["messages"][-1].content}
 
 if __name__ == "__main__":
-    task = " ".join(sys.argv[1:]) or "What is 123 * 456?"
-    print(run(task))
+    app.run()
